@@ -1,0 +1,47 @@
+from transformers import BertTokenizer, BertForSequenceClassification
+import requests
+import pandas as pd
+from scipy.spatial.distance import cosine
+
+def get_embeddings(input_text, model_name, api_key):
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {api_key}"
+    }
+    data = {
+        "input": input_text,
+        "model": model_name
+    }
+    response = requests.post("https://api.openai.com/v1/embeddings", headers=headers, json=data)
+    return response.json()
+
+# Set your API key here
+api_key = "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"
+model_name_ada = "text-embedding-ada-002"
+
+# Read the first row of original and decompressed prompt columns from Excel
+file_path = r'C:\Users\User\Desktop\intership\sources\Prompt Task.xlsx'
+df = pd.read_excel(file_path)
+original_prompt = df.loc[0, 'Original Prompt']
+decompressed_prompt = df.loc[0, 'Decompressed Prompt']
+
+# Get embeddings
+original_embedding = get_embeddings(original_prompt, model_name_ada, api_key)
+decompressed_embedding = get_embeddings(decompressed_prompt, model_name_ada, api_key)
+
+# Print embeddings
+print("Embeddings for Original Prompt:", original_embedding)
+print("Embeddings for Decompressed Prompt:", decompressed_embedding)
+
+# Assuming that the embeddings are returned as a list/array, we can calculate cosine similarity
+
+
+# Extract the embeddings
+original_embedding_vector = original_embedding['data'][0]['embedding']
+decompressed_embedding_vector = decompressed_embedding['data'][0]['embedding']
+
+# Calculate cosine similarity
+similarity = 1 - cosine(original_embedding_vector, decompressed_embedding_vector)
+
+print("Cosine Similarity between the Original and Decompressed Prompts:", similarity)
+

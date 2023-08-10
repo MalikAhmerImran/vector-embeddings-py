@@ -1,0 +1,25 @@
+import numpy as np
+import faiss
+
+# Function to calculate cosine similarity between two vectors
+def cosine_similarity(vector1, vector2):
+    dot_product = np.dot(vector1, vector2)
+    norm_vector1 = np.linalg.norm(vector1)
+    norm_vector2 = np.linalg.norm(vector2)
+    if norm_vector1 != 0 and norm_vector2 != 0:
+        return dot_product / (norm_vector1 * norm_vector2)
+    else:
+        return 0  # Similarity is undefined if one of the norms is zero
+
+# Read FAISS index
+index = faiss.read_index("hy_index.faiss")
+
+# Number of original and decompressed embeddings (assuming they are equal)
+num_pairs = index.ntotal // 2
+
+# Compute cosine similarity for corresponding rows
+for i in range(num_pairs):
+    original_embedding = index.reconstruct(i)  # Get original embedding
+    decompressed_embedding = index.reconstruct(i + num_pairs)  # Get corresponding decompressed embedding
+    similarity = cosine_similarity(original_embedding, decompressed_embedding)
+    print(f"Cosine similarity between original row {i} and decompressed row {i}: {similarity}")
