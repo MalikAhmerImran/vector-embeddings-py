@@ -8,15 +8,25 @@ def get_embedding(text, model_name, api_key):
         "Content-Type": "application/json",
         "Authorization": f"Bearer {api_key}"
     }
+
+    # Ensure that the input text does not contain non-finite floating-point values
+    if isinstance(text, float) and not np.isfinite(text):
+        text = 0  # Replace with your desired finite value
+
     data = {
         "input": text,
         "model": model_name
     }
+    
     response = requests.post("https://api.openai.com/v1/embeddings", headers=headers, json=data)
-    return np.array(response.json()['data'][0]['embedding'])
+
+    #print(response.json())
+    return np.array(response.json().get('data', [{}])[0].get('embedding', []))
+
+
 
 # Set your API key and model name here
-api_key = "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"
+api_key =  "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"
 model_name = "text-embedding-ada-002"
 
 # Read the Excel file
@@ -27,9 +37,9 @@ data = pd.read_excel(file_path)
 original_prompt_column = "Original Prompt"
 decompressed_prompt_column = "Decompressed Prompt"
 
-# Slice the first 15 entries for both columns
-original_prompt_texts = data[original_prompt_column].head(15)
-decompressed_prompt_texts = data[decompressed_prompt_column].head(15)
+# Slice the first 90 entries for both columns
+original_prompt_texts = data[original_prompt_column].head(90)
+decompressed_prompt_texts = data[decompressed_prompt_column].head(90)
 
 # Concatenate embeddings into a single array
 embedding_matrix = np.vstack([get_embedding(text, model_name, api_key) for text in original_prompt_texts] +
@@ -58,4 +68,4 @@ for i in range(num_embeddings):
     print(vector)
 
 print("Embeddings processed and stored in FAISS index")
-faiss.write_index(index, "hy_index.faiss")
+faiss.write_index(index, "90_index.faiss")

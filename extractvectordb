@@ -1,5 +1,8 @@
 import numpy as np
 import faiss
+import pandas as pd
+from scipy.stats import pearsonr, spearmanr
+
 
 # Function to calculate cosine similarity between two vectors
 def cosine_similarity(vector1, vector2):
@@ -12,14 +15,49 @@ def cosine_similarity(vector1, vector2):
         return 0  # Similarity is undefined if one of the norms is zero
 
 # Read FAISS index
-index = faiss.read_index("hy_index.faiss")
+index = faiss.read_index("90_index.faiss")
 
 # Number of original and decompressed embeddings (assuming they are equal)
 num_pairs = index.ntotal // 2
 
-# Compute cosine similarity for corresponding rows
+# Create lists to store the cosine similarity, Pearson Correlation, and Spearman Correlation values
+cosine_similarity_values = []
+pearson_correlation_values = []
+spearman_correlation_values = []
+# Compute cosine similarity, Pearson Correlation, and Spearman Correlation for corresponding rows
 for i in range(num_pairs):
     original_embedding = index.reconstruct(i)  # Get original embedding
     decompressed_embedding = index.reconstruct(i + num_pairs)  # Get corresponding decompressed embedding
+    
     similarity = cosine_similarity(original_embedding, decompressed_embedding)
-    print(f"Cosine similarity between original row {i} and decompressed row {i}: {similarity}")
+    cosine_similarity_values.append(similarity)
+    
+    # Calculate Pearson Correlation
+    pearson_correlation, _ = pearsonr(original_embedding, decompressed_embedding)
+    pearson_correlation_values.append(pearson_correlation)
+    
+    # Calculate Spearman Correlation
+    spearman_correlation, _ = spearmanr(original_embedding, decompressed_embedding)
+    spearman_correlation_values.append(spearman_correlation)
+    original_str = ''.join(map(str, original_embedding.astype(int)))
+    decompressed_str = ''.join(map(str, decompressed_embedding.astype(int)))
+    
+   
+
+# Convert the lists into a DataFrame
+df = pd.DataFrame({
+    'cosine_similarity': cosine_similarity_values,
+    'Pearson_Correlation': pearson_correlation_values,
+    'Spearman_Correlation': spearman_correlation_values,
+   
+})
+
+# Write the DataFrame to an Excel file
+df.to_excel('cosine_similarity_values.xlsx', index=False)
+
+
+
+
+
+
+
